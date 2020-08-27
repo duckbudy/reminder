@@ -34,7 +34,7 @@ public class ReminderMain extends Application {
 	private static MouseListener mouseListener;
 
 	private static ReminderMain instance;
-	static {
+	static { 
 		// 执行stage.close()方法,窗口不直接退出
 		Platform.setImplicitExit(false);
 

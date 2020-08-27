@@ -8,6 +8,8 @@ import java.awt.event.InputEvent;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.TimerTask;
 
 import javax.swing.JFrame;
@@ -52,24 +54,41 @@ public class TimeSet extends TimerTask {
     }
     
     private String  showRemind() throws IOException {
-    	NoteEditUtils n=new NoteEditUtils();
-    	String items=n.readNote();
-    	String[] item=items.split("\r\n");
-    	for(int i=0;i<item.length;i++) {
-    		String[] s=item[i].split("\t");
-    		if(s.length==3) {
-    			String currentDate="";
-    			if(s[0].equals("每天")) {
-    			  currentDate=getCurrentDate("HH:mm");
-    			}else if(s[0].contentEquals("指定时间")){
-    				currentDate=getCurrentDate("yyyy-MM-dd HH:mm");
-    			}
-    			System.out.println("Type is "+s[0]+",the current time is "+currentDate+",s1 is "+s[1]+",the result is "+currentDate.equals(s[1]));
-    			if(currentDate.equals(s[1])) {
-					 return s[2];
-				}
-    		}
-    	}
+    	//从txt读取
+//    	NoteEditUtils n=new NoteEditUtils();
+//    	String items=n.readNote();
+//    	String[] item=items.split("\r\n");
+//    	for(int i=0;i<item.length;i++) {
+//    		String[] s=item[i].split("\t");
+//    		if(s.length==3) {
+//    			String currentDate="";
+//    			if(s[0].equals("每天")) {
+//    			  currentDate=getCurrentDate("HH:mm");
+//    			}else if(s[0].contentEquals("指定时间")){
+//    				currentDate=getCurrentDate("yyyy-MM-dd HH:mm");
+//    			}
+//    			System.out.println("Type is "+s[0]+",the current time is "+currentDate+",s1 is "+s[1]+",the result is "+currentDate.equals(s[1]));
+//    			if(currentDate.equals(s[1])) {
+//					 return s[2];
+//				}
+//    		}
+//    	}
+    	//从mogodb读取    	
+    	MongoDBJDBC m=new MongoDBJDBC();
+		List<Map<String,String>> list=m.queryDocument();
+		for(int i=0;i<list.size();i++) {
+			Map<String,String> l=list.get(i);
+			String currentDate="";
+			if(l.get("eventType").equals("每天")) {
+			  currentDate=getCurrentDate("HH:mm");
+			}else if(l.get("eventType").contentEquals("指定时间")){
+				currentDate=getCurrentDate("yyyy-MM-dd HH:mm");
+			}
+			System.out.println("Type is "+l.get("eventType")+",the current time is "+currentDate+",s1 is "+l.get("eventTime").toString()+",the result is "+currentDate.equals(l.get("eventTime").toString()));
+			if(currentDate.equals(l.get("eventTime").toString())) {
+				 return l.get("eventContent").toString();
+			}
+		}
     	return null;
     }
     private String getCurrentDate(String format) {

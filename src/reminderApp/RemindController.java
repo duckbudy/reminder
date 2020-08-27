@@ -3,9 +3,16 @@ package reminderApp;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import org.bson.Document;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -55,26 +62,36 @@ public class RemindController implements Initializable {
 		readNoticeFile();
 	}
 	private void readNoticeFile() {
-		NoteEditUtils n=new NoteEditUtils();
-		try {
-			String sb=n.readNote();
-			if(sb.length()>0) {
-				eventType.setCellValueFactory(new PropertyValueFactory<>("eventType"));
-				eventTime.setCellValueFactory(new PropertyValueFactory<>("eventTime"));
-				eventContent.setCellValueFactory(new PropertyValueFactory<>("eventContent"));
-				eventList.clear();
-				String[] ss=sb.split("\r\n");
-				for(int i=0;i<ss.length;i++) {
-					String[] item=ss[i].split("\t");
-					if(item.length==3) {
-						eventList.add(new EventListModel(item[0], item[1], item[2]));						
-					}
-				}
-				table1.setItems(eventList);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		NoteEditUtils n=new NoteEditUtils();
+//		try {
+//			String sb=n.readNote();
+//			if(sb.length()>0) {
+//				eventType.setCellValueFactory(new PropertyValueFactory<>("eventType"));
+//				eventTime.setCellValueFactory(new PropertyValueFactory<>("eventTime"));
+//				eventContent.setCellValueFactory(new PropertyValueFactory<>("eventContent"));
+//				eventList.clear();
+//				String[] ss=sb.split("\r\n");
+//				for(int i=0;i<ss.length;i++) {
+//					String[] item=ss[i].split("\t");
+//					if(item.length==3) {
+//						eventList.add(new EventListModel(item[0], item[1], item[2]));						
+//					}
+//				}
+//				table1.setItems(eventList);
+//			}
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		eventType.setCellValueFactory(new PropertyValueFactory<>("eventType"));
+		eventTime.setCellValueFactory(new PropertyValueFactory<>("eventTime"));
+		eventContent.setCellValueFactory(new PropertyValueFactory<>("eventContent"));
+		eventList.clear();
+		MongoDBJDBC m=new MongoDBJDBC();
+		List<Map<String,String>> list=m.queryDocument();
+		list.forEach(l->{
+			eventList.add(new EventListModel(l.get("eventType"), l.get("eventTime"), l.get("eventContent")));
+			table1.setItems(eventList);
+		});
 	}
 
 	public void showText(String text) {
@@ -108,6 +125,10 @@ public class RemindController implements Initializable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		//插入mongodb
+		MongoDBJDBC m=new MongoDBJDBC();
+		m.addDocument(eventList.get(eventList.size()-1));
+		
 	}
 
 	public void deleteItem(ActionEvent event) {
@@ -127,7 +148,15 @@ public class RemindController implements Initializable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		MongoDBJDBC m=new MongoDBJDBC();
+		m.deleteDocument("eventContent", t.getSelectedItem().getEventContent());
+		
 		eventList.remove(index);
+		
+		eventList.clear();
+		readNoticeFile();
+		
 	}
 
 	public void updateItem(ActionEvent event) {
@@ -145,19 +174,27 @@ public class RemindController implements Initializable {
 		String content = contentArea.getText();
 		String datetime = timeArea.getText();
 		String type = cbox.getValue();
+//从txt读取		
 		String newItem=type.concat("\t").concat(datetime).concat("\t").concat(content);
-//		eventList.remove(index);
-//		eventList.add(new EventListModel(index, type, datetime.toString(), content));
-		//table1.setItems(eventList);
 		NoteEditUtils n=new NoteEditUtils();
 		try {
 			n.updateNote(oldItem, newItem);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		//从mongodb读取		
+		MongoDBJDBC m=new MongoDBJDBC();
+		if(!content.equals(t.getSelectedItem().getEventContent())) {
+			m.updateDocument("eventContent", t.getSelectedItem().getEventContent(), content);
+		}else if(!datetime.equals(t.getSelectedItem().getEventTime())){
+			m.updateDocument("eventTime", t.getSelectedItem().getEventTime(), datetime);
+		}else if(!type.equals(t.getSelectedItem().getEventType())) {
+			m.updateDocument("eventType", t.getSelectedItem().getEventType(), type);
+		}
+		
 		eventList.clear();
 		readNoticeFile();
-		
 	}
 
 	public void getItem(MouseEvent event) {
