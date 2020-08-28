@@ -16,38 +16,6 @@ import com.mongodb.client.model.Filters;
 
 public class MongoDBJDBC {
 	private static MongoClient mongoClient;
-	public static void main(String args[]) {
-		try {
-			// 连接到 mongodb 服务
-			 mongoClient = new MongoClient("localhost", 27017);
-
-			// 连接到数据库
-			MongoDatabase mongoDatabase = mongoClient.getDatabase("liz");
-			System.out.println("Connect to database successfully");
-
-//	       mongoDatabase.createCollection("testjava");
-//	       System.out.println("集合创建成功");
-
-			MongoCollection<Document> collection = mongoDatabase.getCollection("testjava");
-			System.out.println("集合 test 选择成功");
-
-//			Document document = new Document("title", "MongoDB").append("description", "database").append("likes", 100)
-//					.append("by", "Fly");
-//			List<Document> documents = new ArrayList<Document>();
-//			documents.add(document);
-//			collection.insertMany(documents);
-//			System.out.println("文档插入成功");
-
-			FindIterable<Document> findIterable = collection.find();
-			MongoCursor<Document> mongoCursor = findIterable.iterator();
-			while (mongoCursor.hasNext()) {
-				System.out.println(mongoCursor.next());
-			}
-
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-		}
-	}
 
 	private MongoCollection<Document> connMongoDB() {
 		// 连接到 mongodb 服务
